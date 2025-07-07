@@ -11,18 +11,25 @@ NC='\033[0m'        # No color
 
 # Spinner animation function
 spinner() {
-    local msg=$1
-    local pid=$!
+    local msg="$1"
+    local pid=$2
     local spinstr='|/-\'
     local temp
     echo -ne "${WHT}[*] $msg...${NC}"
-    while kill -0 $pid 2>/dev/null; do
+    while kill -0 "$pid" 2>/dev/null; do
         temp=${spinstr#?}
         printf "\r${WHT}[*] $msg... [%c]${NC}" "$spinstr"
         spinstr=$temp${spinstr%"$temp"}
         sleep 0.1
     done
-    printf "\r${WHT}[*] $msg...${NC} ${GRN}Done${NC}\n"
+    wait "$pid"
+    if [ $? -eq 0 ]; then
+        printf "\r${WHT}[*] $msg...${NC} ${GRN}Done${NC}\n"
+        return 0
+    else
+        printf "\r${WHT}[*] $msg...${NC} ${RED}Failed${NC}\n"
+        return 1
+    fi
 }
 
 clear
@@ -49,11 +56,11 @@ echo -e "${NC}"
 
 # Function to check last command status
 check_status() {
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}[✗] Error: $1 failed!${NC}"
+    if [ $1 -ne 0 ]; then
+        echo -e "${RED}[✗] Error: $2 failed!${NC}"
         return 1
     else
-        echo -e "${GRN}[✓] $1 completed.${NC}"
+        echo -e "${GRN}[✓] $2 completed.${NC}"
         return 0
     fi
 }
@@ -61,8 +68,6 @@ check_status() {
 # Function to check device
 check_device() {
     echo -e "${WHT}[*] Checking device compatibility...${NC}"
-    command -v termux-setup-storage >/dev/null 2>&1 &
-    spinner "Verifying Termux"
     if command -v termux-setup-storage >/dev/null 2>&1; then
         echo -e "${GRN}[✓] Termux detected, device supported.${NC}"
         return 0
@@ -75,7 +80,7 @@ check_device() {
 # Function to recommend Kali NetHunter version
 recommend_kali_version() {
     echo -e "${WHT}[*] Analyzing device specifications...${NC}"
-    sleep 1 & spinner "Checking specs"
+    sleep 1
 
     # Check CPU architecture
     ARCH=$(uname -m)
@@ -86,7 +91,7 @@ recommend_kali_version() {
     echo -e "${WHT}[*] Total RAM: ${RAM}MB${NC}"
 
     # Check available storage in home directory (in GB)
-    STORAGE=$(df -h $HOME | tail -n 1 | awk '{print $4}' | grep -o '[0-9]\+')
+    STORAGE=$(df -h "$HOME" | tail -n 1 | awk '{print $4}' | grep -oE '[0-9]+' | head -n 1)
     if [ -z "$STORAGE" ]; then
         STORAGE=0
     fi
@@ -108,9 +113,9 @@ check_existing_installation() {
         echo -e "${YEL}[!] Kali NetHunter appears to be installed already.${NC}"
         echo -e "${YEL}Do you want to reinstall? This will overwrite existing files. (y/n)${NC}"
         read -p " Confirm: " confirm
-        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+        if ! echo "$confirm" | grep -qi '^y$'; then
             echo -e "${YEL}Installation cancelled.${NC}"
-            exit 0
+            exit 1
         fi
     fi
 }
@@ -124,9 +129,10 @@ case "$choice" in
             recommend_kali_version
             echo -e "${YEL}Press Enter to return to menu...${NC}"
             read -r
+            exec "$0" # Restart script to show menu again
         fi
         echo -e "${YEL}Exiting device check...${NC}"
-        exit 0
+        exit 1
         ;;
     2)
         clear
@@ -140,19 +146,19 @@ case "$choice" in
 
         echo -e "${WHT}[*] Setting up storage permissions...${NC}"
         termux-setup-storage &
-        spinner "Configuring storage"
-        check_status "Storage setup" || exit 1
+        spinner "Configuring storage" $!
+        check_status $? "Storage setup" || exit 1
 
         echo -e "${WHT}[*] Installing wget...${NC}"
         pkg install wget -y &
-        spinner "Installing wget"
-        check_status "wget installation" || exit 1
+        spinner "Installing wget" $!
+        check_status $? "wget installation" || exit 1
 
         echo -e "${WHT}[*] Downloading Kali NetHunter installer...${NC}"
         # Use official Kali NetHunter URL (update this if needed)
         wget -O install-nethunter-termux https://kali.download/nethunter-images/installer/install-nethunter-termux &
-        spinner "Downloading installer"
-        if check_status "Installer download"; then
+        spinner "Downloading installer" $!
+        if check_status $? "Installer download"; then
             if [ ! -s install-nethunter-termux ]; then
                 echo -e "${RED}[✗] Error: Downloaded file is empty or corrupted!${NC}"
                 exit 1
@@ -161,33 +167,41 @@ case "$choice" in
             exit 1
         fi
 
-        echo -e "${WHT}[*] Setting permissions (chmod +x)...${NC}"
-        chmod +x install-nethunter-termux &
-        spinner "Setting permissions"
-        check_status "Permission setup" || exit 1
+        # Optional: Add checksum verification (example)
+        echo -e "${WHT}[*] Verifying installer integrity...${NC}"
+        # Example checksum (replace with actual checksum from official source)
+        EXPECTED_CHECKSUM="replace_with_actual_sha256sum"
+        ACTUAL_CHECKSUM=$(sha256sum install-nethunter-termux | awk '{print $1}')
+        if [ "$ACTUAL_CHECKSUM" != "$EXPECTED_CHECKSUM" ] && [ -n "$EXPECTED_CHECKSUM" ]; then
+            echo -e "${RED}[✗] Error: Checksum verification failed!${NC}"
+            exit 1
+        else
+            echo -e "${GRN}[✓] Checksum verification passed or skipped.${NC}"
+        fi
+
+        echo -e "${WHT}[*] Setting permissions...${NC}"
+        chmod +x install-nethunter-termux
+        check_status $? "Permission setup" || exit 1
 
         echo -e "${WHT}[*] Running installer...${NC}"
         ./install-nethunter-termux &
-        spinner "Running installer"
-        if [ $? -eq 0 ]; then
-            echo -e "${GRN}[✓] Success! Kali NetHunter installed.${NC}"
-        else
-            echo -e "${RED}[✗] Installation failed!${NC}"
-            exit 1
-        fi
+        spinner "Running installer" $!
+        check_status $? "Kali NetHunter installation" || exit 1
+
+        echo -e "${GRN}[✓] Success! Kali NetHunter installed.${NC}"
         ;;
     3)
         clear
         echo -e "${YEL}[!] WARNING: This will remove all Kali NetHunter files. Continue? (y/n)${NC}"
         read -p " Confirm: " confirm
-        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+        if ! echo "$confirm" | grep -qi '^y$'; then
             echo -e "${YEL}Removal cancelled.${NC}"
-            exit 0
+            exit 1
         fi
         echo -e "${WHT}[*] Removing Kali NetHunter files...${NC}"
         rm -rf install-nethunter-termux kali-arm64 kali-armhf kali-fs kalinethunter &
-        spinner "Removing files"
-        check_status "File removal"
+        spinner "Removing files" $!
+        check_status $? "File removal" || exit 1
         echo -e "${GRN}[✓] Kali NetHunter removed successfully!${NC}"
         ;;
     4)
