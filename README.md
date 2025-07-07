@@ -17,12 +17,28 @@ A sleek and modern Bash script to install or remove **Kali NetHunter** in **Term
 ---
 
 ##Disclaimer (Read carefully)
+> I (Yatharth / Hm) am not responsible for any misuse, wrong use, damage, or legal problems.
+I don't want to take that risk — so please use it completely at your own risk.
 
-This script is made purely for educational purposes. Installing or modifying system environments like Kali NetHunter comes with risks, including data loss, device malfunction, or legal consequences.
+__
+##⚖️ Hacking Law (Important)
 
-I (Yatharth / Hm) do not take responsibility for any direct or indirect damage, misuse, or problems caused by running this script.
-Always backup your data, read official Kali documentation, and proceed only if you fully understand what you're doing.
-Ethical hacking tools must only be used on systems you own or have permission to test.
+Using hacking tools the wrong way can be illegal.
+Under laws like the Indian IT Act 2000 (and similar laws in many countries), unauthorized access, testing, or attacks on systems you don’t own can lead to fines or even jail.
+
+These tools should only be used:
+
+For learning and educational purposes
+
+On your own devices, or
+
+With clear permission (authorized penetration testing)
+
+
+Testing or attacking someone else’s website, network, or device without permission is strictly illegal.
+
+> I (Yatharth / Hm) do not take any responsibility for misuse, damage, or legal problems caused by running this script.
+Please use responsibly and ethically. 😎✌️
 
 ## 🎨 Banner Preview
 ```bash
