@@ -1,15 +1,35 @@
-#!/bin/bash
 
 # Colors
-RED='\033[1;31m'    # Red for errors
-GRN='\033[1;32m'    # Green for success
-BLU='\033[1;34m'    # Blue for banner and headers
-YEL='\033[1;33m'    # Yellow for prompts and exit
-MAG='\033[1;35m'    # Magenta for menu options
-WHT='\033[1;37m'    # White for neutral text
-NC='\033[0m'        # No color
+RED='\033[1;31m'
+GRN='\033[1;32m'
+BLU='\033[1;34m'
+YEL='\033[1;33m'
+PUR='\033[1;35m'
+WHT='\033[1;37m'
+NC='\033[0m'
 
-clear
+# Spinner function
+spinner() {
+    local msg="$1"
+    local pid=$2
+    local spinstr='|/-\\'
+    local temp
+    echo -ne "${WHT}[*] $msg...${NC}"
+    while kill -0 "$pid" 2>/dev/null; do
+        temp=${spinstr#?}
+        printf "\r${WHT}[*] $msg... [%c]${NC}" "$spinstr"
+        spinstr=$temp${spinstr%"$temp"}
+        sleep 0.1
+    done
+    wait "$pid"
+    if [ $? -eq 0 ]; then
+        printf "\r${WHT}[*] $msg...${NC} ${GRN}Done${NC}\n"
+        return 0
+    else
+        printf "\r${WHT}[*] $msg...${NC} ${RED}Failed${NC}\n"
+        return 1
+    fi
+}
 
 # Banner
 echo -e "${BLU}"
