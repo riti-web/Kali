@@ -5,7 +5,7 @@ RED='\033[1;31m'    # Red for errors
 GRN='\033[1;32m'    # Green for success
 BLU='\033[1;34m'    # Blue for banner and headers
 YEL='\033[1;33m'    # Yellow for prompts and exit
-PUR='\033[1;35m'    # Purple for menu options (replacing magenta)
+PUR='\033[1;35m'    # Purple for menu options
 WHT='\033[1;37m'    # White for neutral text
 NC='\033[0m'        # No color
 
@@ -51,8 +51,10 @@ echo -e "${NC}"
 check_status() {
     if [ $? -ne 0 ]; then
         echo -e "${RED}[✗] Error: $1 failed!${NC}"
+        return 1
     else
         echo -e "${GRN}[✓] $1 completed.${NC}"
+        return 0
     fi
 }
 
@@ -100,73 +102,100 @@ recommend_kali_version() {
     fi
 }
 
+# Function to check for existing NetHunter installation
+check_existing_installation() {
+    if [ -d "$HOME/kali-arm64" ] || [ -d "$HOME/kali-armhf" ] || [ -d "$HOME/kali-fs" ]; then
+        echo -e "${YEL}[!] Kali NetHunter appears to be installed already.${NC}"
+        echo -e "${YEL}Do you want to reinstall? This will overwrite existing files. (y/n)${NC}"
+        read -p " Confirm: " confirm
+        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+            echo -e "${YEL}Installation cancelled.${NC}"
+            exit 0
+        fi
+    fi
+}
+
 # Menu logic
-if [ "$choice" == "1" ]; then
-    clear
-    check_device
-    if [ $? -eq 0 ]; then
-        recommend_kali_version
-        echo -e "${YEL}Press Enter to return to menu...${NC}"
-        read -r
-    fi
-    echo -e "${YEL}Exiting device check...${NC}"
-    exit 0
-
-elif [ "$choice" == "2" ]; then
-    clear
-    check_device
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}[✗] Installation aborted due to device check failure.${NC}"
-        exit 1
-    fi
-
-    echo -e "${WHT}[*] Setting up storage permissions...${NC}"
-    termux-setup-storage &
-    spinner "Configuring storage"
-    check_status "Storage setup"
-
-    echo -e "${WHT}[*] Installing wget...${NC}"
-    pkg install wget -y &
-    spinner "Installing wget"
-    check_status "wget installation"
-
-    echo -e "${WHT}[*] Downloading Kali NetHunter installer...${NC}"
-    wget -O install-nethunter-termux https://offs.ec/2MceZWr &
-    spinner "Downloading installer"
-    check_status "Installer download"
-
-    echo -e "${WHT}[*] Setting permissions (chmod 777)...${NC}"
-    chmod 777 install-nethunter-termux &
-    spinner "Setting permissions"
-    check_status "Permission setup"
-
-    echo -e "${WHT}[*] Running installer...${NC}"
-    ./install-nethunter-termux &
-    spinner "Running installer"
-    if [ $? -eq 0 ]; then
-        echo -e "${GRN}[✓] Success! Kali NetHunter installed.${NC}"
-    else
-        echo -e "${RED}[✗] Installation failed!${NC}"
-    fi
-
-elif [ "$choice" == "3" ]; then
-    clear
-    echo -e "${YEL}[!] WARNING: This will remove all Kali NetHunter files. Continue? (y/n)${NC}"
-    read -p " Confirm: " confirm
-    if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
-        echo -e "${YEL}Removal cancelled.${NC}"
+case "$choice" in
+    1)
+        clear
+        check_device
+        if [ $? -eq 0 ]; then
+            recommend_kali_version
+            echo -e "${YEL}Press Enter to return to menu...${NC}"
+            read -r
+        fi
+        echo -e "${YEL}Exiting device check...${NC}"
         exit 0
-    fi
-    echo -e "${WHT}[*] Removing Kali NetHunter files...${NC}"
-    rm -rf install-nethunter-termux kali-arm64 kali-armhf kali-fs kalinethunter &
-    spinner "Removing files"
-    check_status "File removal"
-    echo -e "${GRN}[✓] Kali NetHunter removed successfully!${NC}"
+        ;;
+    2)
+        clear
+        check_device
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}[✗] Installation aborted due to device check failure.${NC}"
+            exit 1
+        fi
 
-elif [ "$choice" == "4" ]; then
-    echo -e "${YEL}Exiting...${NC}"
-    exit 0
+        check_existing_installation
 
-else
-    echo -e "${RED}Invalid choice! Please select a valid option.${NC}"
-fi
+        echo -e "${WHT}[*] Setting up storage permissions...${NC}"
+        termux-setup-storage &
+        spinner "Configuring storage"
+        check_status "Storage setup" || exit 1
+
+        echo -e "${WHT}[*] Installing wget...${NC}"
+        pkg install wget -y &
+        spinner "Installing wget"
+        check_status "wget installation" || exit 1
+
+        echo -e "${WHT}[*] Downloading Kali NetHunter installer...${NC}"
+        # Use official Kali NetHunter URL (update this if needed)
+        wget -O install-nethunter-termux https://kali.download/nethunter-images/installer/install-nethunter-termux &
+        spinner "Downloading installer"
+        if check_status "Installer download"; then
+            if [ ! -s install-nethunter-termux ]; then
+                echo -e "${RED}[✗] Error: Downloaded file is empty or corrupted!${NC}"
+                exit 1
+            fi
+        else
+            exit 1
+        fi
+
+        echo -e "${WHT}[*] Setting permissions (chmod +x)...${NC}"
+        chmod +x install-nethunter-termux &
+        spinner "Setting permissions"
+        check_status "Permission setup" || exit 1
+
+        echo -e "${WHT}[*] Running installer...${NC}"
+        ./install-nethunter-termux &
+        spinner "Running installer"
+        if [ $? -eq 0 ]; then
+            echo -e "${GRN}[✓] Success! Kali NetHunter installed.${NC}"
+        else
+            echo -e "${RED}[✗] Installation failed!${NC}"
+            exit 1
+        fi
+        ;;
+    3)
+        clear
+        echo -e "${YEL}[!] WARNING: This will remove all Kali NetHunter files. Continue? (y/n)${NC}"
+        read -p " Confirm: " confirm
+        if [ "$confirm" != "y" ] && [ "$confirm" != "Y" ]; then
+            echo -e "${YEL}Removal cancelled.${NC}"
+            exit 0
+        fi
+        echo -e "${WHT}[*] Removing Kali NetHunter files...${NC}"
+        rm -rf install-nethunter-termux kali-arm64 kali-armhf kali-fs kalinethunter &
+        spinner "Removing files"
+        check_status "File removal"
+        echo -e "${GRN}[✓] Kali NetHunter removed successfully!${NC}"
+        ;;
+    4)
+        echo -e "${YEL}Exiting...${NC}"
+        exit 0
+        ;;
+    *)
+        echo -e "${RED}Invalid choice! Please select a valid option.${NC}"
+        exit 1
+        ;;
+esac
