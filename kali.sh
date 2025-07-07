@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # Colors
-RED='\033[1;31m'    # Red for errors
-GRN='\033[1;32m'    # Green for success
-BLU='\033[1;34m'    # Blue for banner and headers
-YEL='\033[1;33m'    # Yellow for prompts and exit
-PUR='\033[1;35m'    # Purple for menu options
-WHT='\033[1;37m'    # White for neutral text
-NC='\033[0m'        # No color
+RED='\033[1;31m'
+GRN='\033[1;32m'
+BLU='\033[1;34m'
+YEL='\033[1;33m'
+PUR='\033[1;35m'
+WHT='\033[1;37m'
+NC='\033[0m' 
 
-# Spinner animation function
+# Spinner function
 spinner() {
     local msg="$1"
     local pid=$2
@@ -32,13 +32,69 @@ spinner() {
     fi
 }
 
+# Status check function
+check_status() {
+    if [ $1 -ne 0 ]; then
+        echo -e "${RED}[✗] Error: $2 failed!${NC}"
+        return 1
+    else
+        echo -e "${GRN}[✓] $2 completed.${NC}"
+        return 0
+    fi
+}
+
+# Device check
+check_device() {
+    echo -e "${WHT}[*] Checking device compatibility...${NC}"
+    if command -v termux-setup-storage >/dev/null 2>&1; then
+        echo -e "${GRN}[✓] Termux detected, device supported.${NC}"
+        return 0
+    else
+        echo -e "${RED}[✗] Device not supported! Please run in Termux.${NC}"
+        return 1
+    fi
+}
+
+# Recommend version
+recommend_kali_version() {
+    echo -e "${WHT}[*] Analyzing device specifications...${NC}"
+    sleep 1
+    ARCH=$(uname -m)
+    echo -e "${WHT}[*] CPU Architecture: $ARCH${NC}"
+    RAM=$(free -m | awk '/Mem:/ {print $2}')
+    echo -e "${WHT}[*] Total RAM: ${RAM}MB${NC}"
+    STORAGE=$(df -h "$HOME" | tail -n 1 | awk '{print $4}' | grep -oE '[0-9]+' | head -n 1)
+    [ -z "$STORAGE" ] && STORAGE=0
+    echo -e "${WHT}[*] Available Storage: ${STORAGE}GB${NC}"
+    if [ "$RAM" -ge 4000 ] && [ "$STORAGE" -ge 10 ] && [ "$ARCH" = "aarch64" ]; then
+        echo -e "${GRN}[✓] Recommended: Kali NetHunter Full${NC}"
+    elif [ "$RAM" -ge 2000 ] && [ "$STORAGE" -ge 5 ]; then
+        echo -e "${GRN}[✓] Recommended: Kali NetHunter Minimal${NC}"
+    else
+        echo -e "${GRN}[✓] Recommended: Kali NetHunter Nano${NC}"
+    fi
+}
+
+# Existing install check
+check_existing_installation() {
+    if [ -d "$HOME/kali-arm64" ] || [ -d "$HOME/kali-armhf" ] || [ -d "$HOME/kali-fs" ]; then
+        echo -e "${YEL}[!] Kali NetHunter appears to be installed already.${NC}"
+        echo -e "${YEL}Do you want to reinstall? This will overwrite existing files. (y/n)${NC}"
+        read -p " Confirm: " confirm
+        if ! echo "$confirm" | grep -qi '^y$'; then
+            echo -e "${YEL}Installation cancelled.${NC}"
+            exit 1
+        fi
+    fi
+}
+
 clear
 
 # Banner
 echo -e "${BLU}"
 echo "┌──────────────────────────┐"
 echo "│     Kali NetHunter       │"
-echo "│   by Yatharth            │"
+echo "│       by Yatharth        │"
 echo "└──────────────────────────┘"
 echo -e "${NC}"
 
@@ -54,72 +110,6 @@ echo -e "${YEL}"
 read -p " Select an option: " choice
 echo -e "${NC}"
 
-# Function to check last command status
-check_status() {
-    if [ $1 -ne 0 ]; then
-        echo -e "${RED}[✗] Error: $2 failed!${NC}"
-        return 1
-    else
-        echo -e "${GRN}[✓] $2 completed.${NC}"
-        return 0
-    fi
-}
-
-# Function to check device
-check_device() {
-    echo -e "${WHT}[*] Checking device compatibility...${NC}"
-    if command -v termux-setup-storage >/dev/null 2>&1; then
-        echo -e "${GRN}[✓] Termux detected, device supported.${NC}"
-        return 0
-    else
-        echo -e "${RED}[✗] Device not supported! Please run in Termux.${NC}"
-        return 1
-    fi
-}
-
-# Function to recommend Kali NetHunter version
-recommend_kali_version() {
-    echo -e "${WHT}[*] Analyzing device specifications...${NC}"
-    sleep 1
-
-    # Check CPU architecture
-    ARCH=$(uname -m)
-    echo -e "${WHT}[*] CPU Architecture: $ARCH${NC}"
-
-    # Check total RAM (in MB)
-    RAM=$(free -m | awk '/Mem:/ {print $2}')
-    echo -e "${WHT}[*] Total RAM: ${RAM}MB${NC}"
-
-    # Check available storage in home directory (in GB)
-    STORAGE=$(df -h "$HOME" | tail -n 1 | awk '{print $4}' | grep -oE '[0-9]+' | head -n 1)
-    if [ -z "$STORAGE" ]; then
-        STORAGE=0
-    fi
-    echo -e "${WHT}[*] Available Storage: ${STORAGE}GB${NC}"
-
-    # Recommend Kali version based on specs
-    if [ "$RAM" -ge 4000 ] && [ "$STORAGE" -ge 10 ] && [ "$ARCH" = "aarch64" ]; then
-        echo -e "${GRN}[✓] Recommended: Kali NetHunter Full (High-end device detected)${NC}"
-    elif [ "$RAM" -ge 2000 ] && [ "$STORAGE" -ge 5 ]; then
-        echo -e "${GRN}[✓] Recommended: Kali NetHunter Minimal (Mid-range device detected)${NC}"
-    else
-        echo -e "${GRN}[✓] Recommended: Kali NetHunter Nano (Low-end device detected)${NC}"
-    fi
-}
-
-# Function to check for existing NetHunter installation
-check_existing_installation() {
-    if [ -d "$HOME/kali-arm64" ] || [ -d "$HOME/kali-armhf" ] || [ -d "$HOME/kali-fs" ]; then
-        echo -e "${YEL}[!] Kali NetHunter appears to be installed already.${NC}"
-        echo -e "${YEL}Do you want to reinstall? This will overwrite existing files. (y/n)${NC}"
-        read -p " Confirm: " confirm
-        if ! echo "$confirm" | grep -qi '^y$'; then
-            echo -e "${YEL}Installation cancelled.${NC}"
-            exit 1
-        fi
-    fi
-}
-
 # Menu logic
 case "$choice" in
     1)
@@ -129,25 +119,25 @@ case "$choice" in
             recommend_kali_version
             echo -e "${YEL}Press Enter to return to menu...${NC}"
             read -r
-            exec "$0" # Restart script to show menu again
+            exec "$0"
         fi
         echo -e "${YEL}Exiting device check...${NC}"
         exit 1
         ;;
     2)
         clear
-        check_device
-        if [ $? -ne 0 ]; then
-            echo -e "${RED}[✗] Installation aborted due to device check failure.${NC}"
-            exit 1
-        fi
+        check_device || { echo -e "${RED}[✗] Installation aborted due to device check failure.${NC}"; exit 1; }
 
         check_existing_installation
 
         echo -e "${WHT}[*] Setting up storage permissions...${NC}"
-        termux-setup-storage &
-        spinner "Configuring storage" $!
-        check_status $? "Storage setup" || exit 1
+        if [ -d "$HOME/storage/shared" ]; then
+            echo -e "${GRN}[✓] Storage already configured.${NC}"
+        else
+            termux-setup-storage &
+            spinner "Configuring storage" $!
+            check_status $? "Storage setup" || exit 1
+        fi
 
         echo -e "${WHT}[*] Installing wget...${NC}"
         pkg install wget -y &
@@ -155,28 +145,12 @@ case "$choice" in
         check_status $? "wget installation" || exit 1
 
         echo -e "${WHT}[*] Downloading Kali NetHunter installer...${NC}"
-        # Use official Kali NetHunter URL (update this if needed)
-        wget -O install-nethunter-termux https://kali.download/nethunter-images/installer/install-nethunter-termux &
+        wget -O install-nethunter-termux https://offs.ec/2MceZWr &
         spinner "Downloading installer" $!
         if check_status $? "Installer download"; then
-            if [ ! -s install-nethunter-termux ]; then
-                echo -e "${RED}[✗] Error: Downloaded file is empty or corrupted!${NC}"
-                exit 1
-            fi
+            [ ! -s install-nethunter-termux ] && { echo -e "${RED}[✗] Error: Downloaded file is empty or corrupted!${NC}"; exit 1; }
         else
             exit 1
-        fi
-
-        # Optional: Add checksum verification (example)
-        echo -e "${WHT}[*] Verifying installer integrity...${NC}"
-        # Example checksum (replace with actual checksum from official source)
-        EXPECTED_CHECKSUM="replace_with_actual_sha256sum"
-        ACTUAL_CHECKSUM=$(sha256sum install-nethunter-termux | awk '{print $1}')
-        if [ "$ACTUAL_CHECKSUM" != "$EXPECTED_CHECKSUM" ] && [ -n "$EXPECTED_CHECKSUM" ]; then
-            echo -e "${RED}[✗] Error: Checksum verification failed!${NC}"
-            exit 1
-        else
-            echo -e "${GRN}[✓] Checksum verification passed or skipped.${NC}"
         fi
 
         echo -e "${WHT}[*] Setting permissions...${NC}"
