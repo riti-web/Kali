@@ -24,12 +24,12 @@ echo "##  88       Y8b d8'          '8b 888888888 88  ##"
 echo "##            ~Ph no. 7091507536~               ##"
 echo "##############   ~By Yatharth~                  ##"
 echo "####### ######## NetHunter 😈 YATHARTH ###########"
-echo -e "${NC}"
+echo -e "${GRN}"
 
 # Menu
 echo -e "${GRN}1) Check device"
-echo -e "2) Install"
-echo -e "${RED}3) Remove"
+echo -e "${BLU}2) Install Kali"
+echo -e "${RED}3) Remove Kali"
 echo -e "${YEL}4) Exit${NC}"
 echo
 read -p "Enter your choice: " choice
@@ -55,9 +55,41 @@ check_device() {
     fi
 }
 
+# Function to recommend Kali NetHunter version
+recommend_kali_version() {
+    echo -e "${CYA}[*] Analyzing device specifications...${NC}"
+
+    # Check CPU architecture
+    ARCH=$(uname -m)
+    echo -e "${CYA}[*] CPU Architecture: $ARCH${NC}"
+
+    # Check total RAM (in MB)
+    RAM=$(free -m | awk '/Mem:/ {print $2}')
+    echo -e "${CYA}[*] Total RAM: ${RAM}MB${NC}"
+
+    # Check available storage in home directory (in GB)
+    STORAGE=$(df -h $HOME | tail -n 1 | awk '{print $4}' | grep -o '[0-9]\+')
+    if [ -z "$STORAGE" ]; then
+        STORAGE=0
+    fi
+    echo -e "${CYA}[*] Available Storage: ${STORAGE}GB${NC}"
+
+    # Recommend Kali version based on specs
+    if [ "$RAM" -ge 4000 ] && [ "$STORAGE" -ge 10 ] && [ "$ARCH" = "aarch64" ]; then
+        echo -e "${GRN}[✓] Recommended: Kali NetHunter Full (High-end device detected)${NC}"
+    elif [ "$RAM" -ge 2000 ] && [ "$STORAGE" -ge 5 ]; then
+        echo -e "${GRN}[✓] Recommended: Kali NetHunter Minimal (Mid-range device detected)${NC}"
+    else
+        echo -e "${GRN}[✓] Recommended: Kali NetHunter Nano (Low-end device detected)${NC}"
+    fi
+}
+
 if [ "$choice" == "1" ]; then
     clear
     check_device
+    if [ $? -eq 0 ]; then
+        recommend_kali_version
+    fi
     echo -e "${YEL}Exiting after device check...${NC}"
     exit 0
 
@@ -77,7 +109,7 @@ elif [ "$choice" == "2" ]; then
     pkg install wget -y
     check_status "wget install"
 
-    echo -e "${CYA}[*] Downloading Kali Nethunter installer...${NC}"
+    echo -e "${CYA}[*] Downloading Kali NetHunter installer...${NC}"
     wget -O install-nethunter-termux https://offs.ec/2MceZWr
     check_status "Download script"
 
