@@ -7,13 +7,13 @@ BLU='\033[1;34m'
 YEL='\033[1;33m'
 PUR='\033[1;35m'
 WHT='\033[1;37m'
-NC='\033[0m' 
+NC='\033[0m'
 
 # Spinner function
 spinner() {
     local msg="$1"
     local pid=$2
-    local spinstr='|/-\'
+    local spinstr='|/-\\'
     local temp
     echo -ne "${WHT}[*] $msg...${NC}"
     while kill -0 "$pid" 2>/dev/null; do
@@ -75,7 +75,7 @@ recommend_kali_version() {
     fi
 }
 
-# Existing install check
+# Existing installation check
 check_existing_installation() {
     if [ -d "$HOME/kali-arm64" ] || [ -d "$HOME/kali-armhf" ] || [ -d "$HOME/kali-fs" ]; then
         echo -e "${YEL}[!] Kali NetHunter appears to be installed already.${NC}"
@@ -92,10 +92,18 @@ clear
 
 # Banner
 echo -e "${BLU}"
-echo "┌──────────────────────────┐"
-echo "│     Kali NetHunter       │"
-echo "│       by Yatharth        │"
-echo "└──────────────────────────┘"
+echo "##################################################"
+echo "##                                              ##"
+echo "##  88      a8P         db        88        88  ##"
+echo "##  88    .88'         d88b       88        88  ##"
+echo "##  88   88'          d8''8b      88        88  ##"
+echo "##  88 d88           d8'  '8b     88        88  ##"
+echo "##  8888'88.        d8YaaaaY8b    88        88  ##"
+echo "##  88P   Y8b      d8''''''''8b   88        88  ##"
+echo "##  88     '88.   d8'        '8b  88        88  ##"
+echo "##  88       Y8b d8'          '8b 888888888 88  ##"
+echo "##                                              ##"
+echo "####  ############# NetHunter ####################"
 echo -e "${NC}"
 
 # Menu
@@ -153,12 +161,31 @@ case "$choice" in
             exit 1
         fi
 
-        echo -e "${WHT}[*] Setting permissions...${NC}"
-        chmod +x install-nethunter-termux
-        check_status $? "Permission setup" || exit 1
+        echo -e "${WHT}[*] Please select version to install:${NC}"
+        echo -e "${PUR} [1] NetHunter ARM64 (full)"
+        echo -e " [2] NetHunter ARM64 (minimal)"
+        echo -e " [3] NetHunter ARM64 (nano)${NC}"
+        read -p " Enter choice (1/2/3): " nethunter_choice
 
         echo -e "${WHT}[*] Running installer...${NC}"
-        ./install-nethunter-termux &
+        chmod +x install-nethunter-termux
+
+        case "$nethunter_choice" in
+            1)
+                ./install-nethunter-termux -f &
+                ;;
+            2)
+                ./install-nethunter-termux -m &
+                ;;
+            3)
+                ./install-nethunter-termux -n &
+                ;;
+            *)
+                echo -e "${RED}Invalid choice! Exiting.${NC}"
+                exit 1
+                ;;
+        esac
+
         spinner "Running installer" $!
         check_status $? "Kali NetHunter installation" || exit 1
 
