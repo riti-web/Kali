@@ -114,6 +114,36 @@ recommend_kali_version() {
     fi
 }
 
+# Function to select NetHunter version
+select_nethunter_version() {
+    echo -e "${BLU}=== Select Kali NetHunter Version ===${NC}"
+    echo -e "${MAG}[1] NetHunter ARM64 (full)${NC}"
+    echo -e "${MAG}[2] NetHunter ARM64 (minimal)${NC}"
+    echo -e "${MAG}[3] NetHunter ARM64 (nano)${NC}"
+    echo -e "${YEL}"
+    read -p "Enter your choice: " version_choice
+    echo -e "${NC}"
+
+    case $version_choice in
+        1)
+            echo -e "${WHT}[*] Selected: NetHunter ARM64 (full)${NC}"
+            NH_VERSION="full"
+            ;;
+        2)
+            echo -e "${WHT}[*] Selected: NetHunter ARM64 (minimal)${NC}"
+            NH_VERSION="minimal"
+            ;;
+        3)
+            echo -e "${WHT}[*] Selected: NetHunter ARM64 (nano)${NC}"
+            NH_VERSION="nano"
+            ;;
+        *)
+            echo -e "${RED}[✗] Invalid version choice! Defaulting to nano.${NC}"
+            NH_VERSION="nano"
+            ;;
+    esac
+}
+
 if [ "$choice" == "1" ]; then
     clear
     check_device
@@ -132,6 +162,9 @@ elif [ "$choice" == "2" ]; then
         echo -e "${RED}[✗] Install aborted due to device check failure.${NC}"
         exit 1
     fi
+
+    # Show NetHunter version selection menu
+    select_nethunter_version
 
     echo -e "${WHT}[*] Setting up storage permission...${NC}"
     (termux-setup-storage) &
@@ -153,11 +186,12 @@ elif [ "$choice" == "2" ]; then
     spinner $! "Setting permissions"
     check_status "Give permission"
 
-    echo -e "${WHT}[*] Running installer...${NC}"
-    (./install-nethunter-termux) &
+    echo -e "${WHT}[*] Running installer for NetHunter $NH_VERSION...${NC}"
+    # Assuming install-nethunter-termux accepts a version argument (modify as needed)
+    (./install-nethunter-termux --version $NH_VERSION) &
     spinner $! "Running installer"
     if [ $? -eq 0 ]; then
-        echo -e "${GRN}[✓] Successful install! Kali Linux installation complete.${NC}"
+        echo -e "${GRN}[✓] Successful install! Kali NetHunter $NH_VERSION installation complete.${NC}"
     else
         echo -e "${RED}[✗] Install problem occurred!${NC}"
     fi
