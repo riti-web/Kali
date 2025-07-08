@@ -1,35 +1,39 @@
+#!/bin/bash
 
 # Colors
-RED='\033[1;31m'
-GRN='\033[1;32m'
-BLU='\033[1;34m'
-YEL='\033[1;33m'
-PUR='\033[1;35m'
-WHT='\033[1;37m'
-NC='\033[0m'
+RED='\033[1;31m'    # Red for errors
+GRN='\033[1;32m'    # Green for success
+BLU='\033[1;34m'    # Blue for banner and headers
+YEL='\033[1;33m'    # Yellow for prompts and exit
+MAG='\033[1;35m'    # Magenta for menu options
+WHT='\033[1;37m'    # White for neutral text
+NC='\033[0m'        # No color
 
-# Spinner function
+# Spinner animation function
 spinner() {
-    local msg="$1"
-    local pid=$2
-    local spinstr='|/-\\'
+    local pid=$1
+    local message=$2
+    local spinstr='|/-\'
     local temp
-    echo -ne "${WHT}[*] $msg...${NC}"
-    while kill -0 "$pid" 2>/dev/null; do
+    echo -ne "${WHT}[*] $message...${NC}"
+    while kill -0 $pid 2>/dev/null; do
         temp=${spinstr#?}
-        printf "\r${WHT}[*] $msg... [%c]${NC}" "$spinstr"
+        printf " [%c]  " "$spinstr"
         spinstr=$temp${spinstr%"$temp"}
         sleep 0.1
+        printf "\b\b\b\b\b\b"
     done
-    wait "$pid"
-    if [ $? -eq 0 ]; then
-        printf "\r${WHT}[*] $msg...${NC} ${GRN}Done${NC}\n"
-        return 0
-    else
-        printf "\r${WHT}[*] $msg...${NC} ${RED}Failed${NC}\n"
-        return 1
-    fi
+    echo -e "\r${WHT}[*] $message... Done${NC}"
 }
+
+# Run initial package updates and installations
+clear
+echo -e "${WHT}[*] Updating and upgrading packages...${NC}"
+(apt update && apt upgrade -y && pkg install wget -y) &
+spinner $! "Updating and installing packages"
+check_status "Package update and installation"
+
+clear
 
 # Banner
 echo -e "${BLU}"
@@ -69,6 +73,8 @@ check_status() {
 # Function to check device
 check_device() {
     echo -e "${WHT}[*] Checking your device...${NC}"
+    (command -v termux-setup-storage >/dev/null 2>&1) &
+    spinner $! "Checking device"
     if command -v termux-setup-storage >/dev/null 2>&1; then
         echo -e "${GRN}[✓] Termux detected, device supported.${NC}"
         return 0
@@ -81,6 +87,7 @@ check_device() {
 # Function to recommend Kali NetHunter version
 recommend_kali_version() {
     echo -e "${WHT}[*] Analyzing device specifications...${NC}"
+    sleep 1  # Simulate processing for animation effect
 
     # Check CPU architecture
     ARCH=$(uname -m)
@@ -127,23 +134,28 @@ elif [ "$choice" == "2" ]; then
     fi
 
     echo -e "${WHT}[*] Setting up storage permission...${NC}"
-    termux-setup-storage
+    (termux-setup-storage) &
+    spinner $! "Setting up storage"
     check_status "Storage setup"
 
     echo -e "${WHT}[*] Installing wget...${NC}"
-    pkg install wget -y
+    (pkg install wget -y) &
+    spinner $! "Installing wget"
     check_status "wget install"
 
     echo -e "${WHT}[*] Downloading Kali NetHunter installer...${NC}"
-    wget -O install-nethunter-termux https://offs.ec/2MceZWr
+    (wget -O install-nethunter-termux https://offs.ec/2MceZWr) &
+    spinner $! "Downloading installer"
     check_status "Download script"
 
     echo -e "${WHT}[*] Giving strong permission (chmod 777)...${NC}"
-    chmod 777 install-nethunter-termux
+    (chmod 777 install-nethunter-termux) &
+    spinner $! "Setting permissions"
     check_status "Give permission"
 
     echo -e "${WHT}[*] Running installer...${NC}"
-    ./install-nethunter-termux
+    (./install-nethunter-termux) &
+    spinner $! "Running installer"
     if [ $? -eq 0 ]; then
         echo -e "${GRN}[✓] Successful install! Kali Linux installation complete.${NC}"
     else
@@ -153,7 +165,8 @@ elif [ "$choice" == "2" ]; then
 elif [ "$choice" == "3" ]; then
     clear
     echo -e "${WHT}[*] Removing Kali Linux files...${NC}"
-    rm -rf install-nethunter-termux kali-arm64 kali-armhf kali-fs kalinethunter
+    (rm -rf install-nethunter-termux kali-arm64 kali-armhf kali-fs kalinethunter) &
+    spinner $! "Removing files"
     check_status "Remove files"
 
     echo -e "${GRN}[✓] Kali Linux removed!${NC}"
