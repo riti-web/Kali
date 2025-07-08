@@ -139,6 +139,7 @@ if [ "$choice" == "1" ]; then
         read -r
     fi
     echo -e "${YEL}Exiting after device check...${NC}"
+    echo -e "${BLU}Enter command (bash kali.sh) ${NC}"
     exit 0
 
 elif [ "$choice" == "2" ]; then
