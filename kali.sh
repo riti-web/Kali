@@ -9,30 +9,6 @@ MAG='\033[1;35m'    # Magenta for menu options
 WHT='\033[1;37m'    # White for neutral text
 NC='\033[0m'        # No color
 
-# Spinner animation function
-spinner() {
-    local pid=$1
-    local message=$2
-    local spinstr='|/-\'
-    local temp
-    echo -ne "${WHT}[*] $message...${NC}"
-    while kill -0 $pid 2>/dev/null; do
-        temp=${spinstr#?}
-        printf " [%c]  " "$spinstr"
-        spinstr=$temp${spinstr%"$temp"}
-        sleep 0.1
-        printf "\b\b\b\b\b\b"
-    done
-    echo -e "\r${WHT}[*] $message... Done${NC}"
-}
-
-# Run initial package updates and installations
-clear
-echo -e "${WHT}[*] Updating and upgrading packages...${NC}"
-(apt update && apt upgrade -y && pkg install wget -y) &
-spinner $! "Updating and installing packages"
-check_status "Package update and installation"
-
 clear
 
 # Banner
@@ -73,8 +49,6 @@ check_status() {
 # Function to check device
 check_device() {
     echo -e "${WHT}[*] Checking your device...${NC}"
-    (command -v termux-setup-storage >/dev/null 2>&1) &
-    spinner $! "Checking device"
     if command -v termux-setup-storage >/dev/null 2>&1; then
         echo -e "${GRN}[✓] Termux detected, device supported.${NC}"
         return 0
@@ -87,7 +61,6 @@ check_device() {
 # Function to recommend Kali NetHunter version
 recommend_kali_version() {
     echo -e "${WHT}[*] Analyzing device specifications...${NC}"
-    sleep 1  # Simulate processing for animation effect
 
     # Check CPU architecture
     ARCH=$(uname -m)
@@ -114,34 +87,47 @@ recommend_kali_version() {
     fi
 }
 
-# Function to select NetHunter version
-select_nethunter_version() {
-    echo -e "${BLU}=== Select Kali NetHunter Version ===${NC}"
-    echo -e "${MAG}[1] NetHunter ARM64 (full)${NC}"
-    echo -e "${MAG}[2] NetHunter ARM64 (minimal)${NC}"
-    echo -e "${MAG}[3] NetHunter ARM64 (nano)${NC}"
-    echo -e "${YEL}"
-    read -p "Enter your choice: " version_choice
-    echo -e "${NC}"
+# Function to fully remove Kali NetHunter
+remove_kali() {
+    echo -e "${WHT}[*] Starting Kali NetHunter removal process...${NC}"
 
-    case $version_choice in
-        1)
-            echo -e "${WHT}[*] Selected: NetHunter ARM64 (full)${NC}"
-            NH_VERSION="full"
-            ;;
-        2)
-            echo -e "${WHT}[*] Selected: NetHunter ARM64 (minimal)${NC}"
-            NH_VERSION="minimal"
-            ;;
-        3)
-            echo -e "${WHT}[*] Selected: NetHunter ARM64 (nano)${NC}"
-            NH_VERSION="nano"
-            ;;
-        *)
-            echo -e "${RED}[✗] Invalid version choice! Defaulting to nano.${NC}"
-            NH_VERSION="nano"
-            ;;
-    esac
+    # Stop any running NetHunter processes
+    echo -e "${WHT}[*] Stopping NetHunter processes...${NC}"
+    if [ -f "$HOME/kali-arm64/usr/bin/nethunter" ]; then
+        "$HOME/kali-arm64/usr/bin/nethunter" stop
+        check_status "Stop NetHunter processes"
+    fi
+
+    # Remove Kali NetHunter directories
+    echo -e "${WHT}[*] Removing Kali NetHunter directories...${NC}"
+    rm -rf "$HOME/kali-arm64" "$HOME/kali-armhf" "$HOME/kali-fs" "$HOME/kalinethunter" "$HOME/install-nethunter-termux"
+    check_status "Remove directories"
+
+    # Remove NetHunter symbolic links and commands
+    echo -e "${WHT}[*] Removing NetHunter commands and links...${NC}"
+    rm -f /data/data/com.termux/files/usr/bin/nethunter
+    rm -f /data/data/com.termux/files/usr/bin/nh
+    check_status "Remove commands"
+
+    # Remove NetHunter-related configurations in ~/.bashrc
+    echo -e "${WHT}[*] Cleaning up .bashrc configurations...${NC}"
+    if [ -f "$HOME/.bashrc" ]; then
+        sed -i '/nethunter/d' "$HOME/.bashrc"
+        sed -i '/nh/d' "$HOME/.bashrc"
+        check_status "Clean .bashrc"
+    fi
+
+    # Remove Termux boot scripts related to NetHunter
+    echo -e "${WHT}[*] Removing Termux boot scripts...${NC}"
+    rm -rf "$HOME/.termux/boot/nethunter*"
+    check_status "Remove boot scripts"
+
+    # Check if any residual files remain
+    if [ -d "$HOME/kali-arm64" ] || [ -f /data/data/com.termux/files/usr/bin/nethunter ]; then
+        echo -e "${RED}[✗] Some files could not be removed. Please check manually.${NC}"
+    else
+        echo -e "${GRN}[✓] Kali NetHunter fully removed!${NC}"
+    fi
 }
 
 if [ "$choice" == "1" ]; then
@@ -163,47 +149,33 @@ elif [ "$choice" == "2" ]; then
         exit 1
     fi
 
-    # Show NetHunter version selection menu
-    select_nethunter_version
-
     echo -e "${WHT}[*] Setting up storage permission...${NC}"
-    (termux-setup-storage) &
-    spinner $! "Setting up storage"
+    termux-setup-storage
     check_status "Storage setup"
 
     echo -e "${WHT}[*] Installing wget...${NC}"
-    (pkg install wget -y) &
-    spinner $! "Installing wget"
+    pkg install wget -y
     check_status "wget install"
 
     echo -e "${WHT}[*] Downloading Kali NetHunter installer...${NC}"
-    (wget -O install-nethunter-termux https://offs.ec/2MceZWr) &
-    spinner $! "Downloading installer"
+    wget -O install-nethunter-termux https://offs.ec/2MceZWr
     check_status "Download script"
 
     echo -e "${WHT}[*] Giving strong permission (chmod 777)...${NC}"
-    (chmod 777 install-nethunter-termux) &
-    spinner $! "Setting permissions"
+    chmod 777 install-nethunter-termux
     check_status "Give permission"
 
-    echo -e "${WHT}[*] Running installer for NetHunter $NH_VERSION...${NC}"
-    # Assuming install-nethunter-termux accepts a version argument (modify as needed)
-    (./install-nethunter-termux --version $NH_VERSION) &
-    spinner $! "Running installer"
+    echo -e "${WHT}[*] Running installer...${NC}"
+    ./install-nethunter-termux
     if [ $? -eq 0 ]; then
-        echo -e "${GRN}[✓] Successful install! Kali NetHunter $NH_VERSION installation complete.${NC}"
+        echo -e "${GRN}[✓] Successful install! Kali Linux installation complete.${NC}"
     else
         echo -e "${RED}[✗] Install problem occurred!${NC}"
     fi
 
 elif [ "$choice" == "3" ]; then
     clear
-    echo -e "${WHT}[*] Removing Kali Linux files...${NC}"
-    (rm -rf install-nethunter-termux kali-arm64 kali-armhf kali-fs kalinethunter) &
-    spinner $! "Removing files"
-    check_status "Remove files"
-
-    echo -e "${GRN}[✓] Kali Linux removed!${NC}"
+    remove_kali
 
 elif [ "$choice" == "4" ]; then
     echo -e "${YEL}Exiting...${NC}"
