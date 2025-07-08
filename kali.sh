@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Colors
 RED='\033[1;31m'        # Red for errors
 GRN='\033[1;32m'        # Green for success
@@ -16,7 +15,6 @@ ORNG='\033[38;5;208m'   # Orange for warnings
 LBLU='\033[0;34m'       # Light Blue for subtle highlights
 PINK='\033[38;5;200m'   # Pink for standout text
 NC='\033[0m'            # No color
-
 clear
 
 # Banner
@@ -32,14 +30,15 @@ echo "##  88     '88.   d8'        '8b  88        88  ##"
 echo "##  88       Y8b d8'          '8b 888888888 88  ##"
 echo "##            ~Ph no. 7091507536~               ##"
 echo "##############   ~By Yatharth~                  ##"
-echo -e "${BCYAN}####### ######## NetHunter 😈 YATHARTH ###########${NC}"
+echo "####### ######## NetHunter 😈 YATHARTH ###########"
+echo -e "${NC}"
 
 # Menu
-echo -e "${BPURP}=== Kali NetHunter Installer ===${NC}"
+echo -e "${BLU}=== Kali NetHunter Installer ===${NC}"
 echo -e "${MAG}1) Check device${NC}"
-echo -e "${CYAN}2) Install Kali${NC}"
-echo -e "${PINK}3) Remove Kali${NC}"
-echo -e "${PURP}4) Exit${NC}"
+echo -e "${MAG}2) Install Kali${NC}"
+echo -e "${MAG}3) Remove Kali${NC}"
+echo -e "${MAG}4) Exit${NC}"
 echo -e "${YEL}"
 read -p "Enter your choice: " choice
 echo -e "${NC}"
@@ -54,79 +53,70 @@ check_status() {
 }
 
 # Function to check device
-check_frame() {
-    echo -e "${LBLU}[*] Checking your device...${NC}"
+check_device() {
+    echo -e "${WHT}[*] Checking your device...${NC}"
     if command -v termux-setup-storage >/dev/null 2>&1; then
-        echo -e "${CYAN}[✓] Termux detected, device supported.${NC}"
+        echo -e "${GRN}[✓] Termux detected, device supported.${NC}"
         return 0
     else
-        echo -e "${ORNG}[✗] Device not supported! Please run in Termux.${NC}"
+        echo -e "${RED}[✗] Device not supported! Please run in Termux.${NC}"
         return 1
     fi
 }
 
 # Function to recommend Kali NetHunter version
 recommend_kali_version() {
-    echo -e "${LBLU}[*] Analyzing device specifications...${NC}"
+    echo -e "${WHT}[*] Analyzing device specifications...${NC}"
 
     # Check CPU architecture
     ARCH=$(uname -m)
-    echo -e "${LGRAY}[*] CPU Architecture: $ARCH${NC}"
+    echo -e "${WHT}[*] CPU Architecture: $ARCH${NC}"
 
     # Check total RAM (in MB)
     RAM=$(free -m | awk '/Mem:/ {print $2}')
-    echo -e "${LGRAY}[*] Total RAM: ${RAM}MB${NC}"
+    echo -e "${WHT}[*] Total RAM: ${RAM}MB${NC}"
 
     # Check available storage in home directory (in GB)
     STORAGE=$(df -h $HOME | tail -n 1 | awk '{print $4}' | grep -o '[0-9]\+')
     if [ -z "$STORAGE" ]; then
         STORAGE=0
     fi
-    echo -e "${LGRAY}[*] Available Storage: ${STORAGE}GB${NC}"
+    echo -e "${WHT}[*] Available Storage: ${STORAGE}GB${NC}"
 
     # Recommend Kali version based on specs
     if [ "$RAM" -ge 4000 ] && [ "$STORAGE" -ge 10 ] && [ "$ARCH" = "aarch64" ]; then
-        echo -e "${CYAN}[✓] Recommended: Kali NetHunter Full (High-end device detected)${NC}"
+        echo -e "${GRN}[✓] Recommended: Kali NetHunter Full (High-end device detected)${NC}"
     elif [ "$RAM" -ge 2000 ] && [ "$STORAGE" -ge 5 ]; then
-        echo -e "${CYAN}[✓] Recommended: Kali NetHunter Minimal (Mid-range device detected)${NC}"
+        echo -e "${GRN}[✓] Recommended: Kali NetHunter Minimal (Mid-range device detected)${NC}"
     else
-        echo -e "${CYAN}[✓] Recommended: Kali NetHunter Nano (Low-end device detected)${NC}"
+        echo -e "${GRN}[✓] Recommended: Kali NetHunter Nano (Low-end device detected)${NC}"
     fi
 }
 
 # Function to fully remove Kali NetHunter
 remove_kali() {
-    echo -e "${LBLU}[*] Starting Kali NetHunter removal process...${NC}"
+    echo -e "${WHT}[*] Starting Kali NetHunter removal process...${NC}"
 
-    # Check if Kali chroot exists and run cleanup inside it
-    if [ -d "$HOME/kali-arm64" ] && [ -f "$HOME/kali-arm64/usr/bin/apt" ]; then
-        echo -e "${LGRAY}[*] Running apt autoremove in Kali chroot...${NC}"
-        # Start the chroot environment to run apt autoremove
-        if [ -f "$HOME/kali-arm64/usr/bin/nethunter" ]; then
-            "$HOME/kali-arm64/usr/bin/nethunter" -c "apt update && apt autoremove -y && apt autoclean"
-            check_status "Run apt autoremove and autoclean in chroot"
-        fi
-        # Stop any running NetHunter processes
-        echo -e "${LGRAY}[*] Stopping NetHunter processes...${NC}"
+    # Stop any running NetHunter processes
+    echo -e "${WHT}[*] Stopping NetHunter processes...${NC}"
+    if [ -f "$HOME/kali-arm64/usr/bin/nethunter" ]; then
         "$HOME/kali-arm64/usr/bin/nethunter" stop
         check_status "Stop NetHunter processes"
-    else
-        echo -e "${ORNG}[!] Kali chroot not found or apt not available, skipping apt cleanup...${NC}"
     fi
 
     # Remove Kali NetHunter directories
-    echo -e "${LBLU}[*] Removing Kali NetHunter directories...${NC}"
+    echo -e "${WHT}[*] Removing Kali NetHunter directories...${NC}"
     rm -rf "$HOME/kali-arm64" "$HOME/kali-armhf" "$HOME/kali-fs" "$HOME/kalinethunter" "$HOME/install-nethunter-termux"
     check_status "Remove directories"
 
     # Remove NetHunter symbolic links and commands
-    echo -e "${LBLU}[*] Removing NetHunter commands and links...${NC}"
+    echo -e "${WHT}[*] Removing NetHunter commands and links...${NC}"
     rm -f /data/data/com.termux/files/usr/bin/nethunter
     rm -f /data/data/com.termux/files/usr/bin/nh
     check_status "Remove commands"
 
     # Remove NetHunter-related configurations in ~/.bashrc
-    echo -e "${LBLU}[*] Cleaning up .bashrc configurations...${NC}"
+    echo -e "${WHT}[*] Cleaning up .bashrc configurations...${NC}"
     if [ -f "$HOME/.bashrc" ]; then
         sed -i '/nethunter/d' "$HOME/.bashrc"
         sed -i '/nh/d' "$HOME/.bashrc"
@@ -134,15 +124,13 @@ remove_kali() {
     fi
 
     # Remove Termux boot scripts related to NetHunter
-    echo -e "${LBLU}[*] Removing Termux boot scripts...${NC}"
+    echo -e "${WHT}[*] Removing Termux boot scripts...${NC}"
     rm -rf "$HOME/.termux/boot/nethunter*"
     check_status "Remove boot scripts"
 
     # Check if any residual files remain
     if [ -d "$HOME/kali-arm64" ] || [ -f /data/data/com.termux/files/usr/bin/nethunter ]; then
-        echo -e "${PINK}[✗] Some files could not be removed. Please check manually.${NC}"
-        echo -e "${LGRAY}[*] Run the following to inspect:${NC}"
-        echo -e "${LGRAY}ls -la ~/kali* /data/data/com.termux/files/usr/bin/nethunter${NC}"
+        echo -e "${RED}[✗] Some files could not be removed. Please check manually.${NC}"
     else
         echo -e "${GRN}[✓] Kali NetHunter fully removed!${NC}"
     fi
@@ -157,38 +145,39 @@ if [ "$choice" == "1" ]; then
         read -r
     fi
     echo -e "${YEL}Exiting after device check...${NC}"
+    echo -e "${ORNG}Enter command (bash kali.sh) ${NC}"
     exit 0
 
 elif [ "$choice" == "2" ]; then
     clear
     check_device
     if [ $? -ne 0 ]; then
-        echo -e "${PINK}[✗] Install aborted due to device check failure.${NC}"
+        echo -e "${RED}[✗] Install aborted due to device check failure.${NC}"
         exit 1
     fi
 
-    echo -e "${LBLU}[*] Setting up storage permission...${NC}"
+    echo -e "${WHT}[*] Setting up storage permission...${NC}"
     termux-setup-storage
     check_status "Storage setup"
 
-    echo -e "${LBLU}[*] Installing wget...${NC}"
+    echo -e "${WHT}[*] Installing wget...${NC}"
     pkg install wget -y
     check_status "wget install"
 
-    echo -e "${LBLU}[*] Downloading Kali NetHunter installer...${NC}"
+    echo -e "${WHT}[*] Downloading Kali NetHunter installer...${NC}"
     wget -O install-nethunter-termux https://offs.ec/2MceZWr
     check_status "Download script"
 
-    echo -e "${LBLU}[*] Giving execute permission...${NC}"
-    chmod 700 install-nethunter-termux
+    echo -e "${WHT}[*] Giving strong permission (chmod 777)...${NC}"
+    chmod 777 install-nethunter-termux
     check_status "Give permission"
 
-    echo -e "${LBLU}[*] Running installer...${NC}"
+    echo -e "${WHT}[*] Running installer...${NC}"
     ./install-nethunter-termux
     if [ $? -eq 0 ]; then
         echo -e "${GRN}[✓] Successful install! Kali Linux installation complete.${NC}"
     else
-        echo -e "${PINK}[✗] Install problem occurred!${NC}"
+        echo -e "${RED}[✗] Install problem occurred!${NC}"
     fi
 
 elif [ "$choice" == "3" ]; then
@@ -200,5 +189,5 @@ elif [ "$choice" == "4" ]; then
     exit 0
 
 else
-    echo -e "${PINK}Invalid choice!${NC}"
+    echo -e "${RED}Invalid choice!${NC}"
 fi
