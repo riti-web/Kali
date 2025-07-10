@@ -40,5 +40,5 @@ Under laws like the **Indian IT Act 2000** (and similar laws in other countries)
 
 ## 🚀 Usage
 ```bash
-chmod +x nethunter.sh
-./nethunter.sh
+cd Kali
+bash kali.sh
