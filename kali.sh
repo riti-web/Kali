@@ -9,14 +9,14 @@ WHT='\033[1;37m'        # White for neutral text
 CYAN='\033[0;36m'       # Cyan for informational messages
 BCYAN='\033[1;36m'      # Bold Cyan for emphasized info
 PURP='\033[0;35m'       # Purple for secondary prompts
-BPURP='\033[1;35m'      # Bold Purple for headers
+BPURP='\033[1;35m'      # Bold Purple for headers (replaces  MAG in some places)
 LGRAY='\033[0;37m'      # Light Gray for subtle text
 ORNG='\033[38;5;208m'   # Orange for warnings
 LBLU='\033[0;34m'       # Light Blue for subtle highlights
 PINK='\033[38;5;200m'   # Pink for standout text
 NC='\033[0m'            # No color
-
-# Function for typewriter effect
+clear
+ Function for typewriter effect
 typewriter() {
     text="$1"
     delay=0.05
@@ -51,6 +51,7 @@ echo -e "${CYAN}"
 typewriter "Welcome to Kali NetHunter Installer by Yatharth"
 echo -e "${NC}"
 sleep 1
+
 
 # Banner
 echo -e "${BLU}"
