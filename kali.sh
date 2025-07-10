@@ -9,14 +9,17 @@ WHT='\033[1;37m'        # White for neutral text
 CYAN='\033[0;36m'       # Cyan for informational messages
 BCYAN='\033[1;36m'      # Bold Cyan for emphasized info
 PURP='\033[0;35m'       # Purple for secondary prompts
-BPURP='\033[1;35m'      # Bold Purple for headers (replaces  MAG in some places)
+BPURP='\033[1;35m'      # Bold Purple for headers (replaces MAG in some places)
 LGRAY='\033[0;37m'      # Light Gray for subtle text
 ORNG='\033[38;5;208m'   # Orange for warnings
 LBLU='\033[0;34m'       # Light Blue for subtle highlights
 PINK='\033[38;5;200m'   # Pink for standout text
 NC='\033[0m'            # No color
+
+# Clear screen
 clear
- Function for typewriter effect
+
+# Function for typewriter effect
 typewriter() {
     text="$1"
     delay=0.05
@@ -26,9 +29,6 @@ typewriter() {
     done
     echo
 }
-
-# Clear screen
-clear
 
 # Install figlet if not already installed
 if ! command -v figlet >/dev/null 2>&1; then
@@ -51,7 +51,6 @@ echo -e "${CYAN}"
 typewriter "Welcome to Kali NetHunter Installer by Yatharth"
 echo -e "${NC}"
 sleep 1
-
 
 # Banner
 echo -e "${BLU}"
@@ -129,49 +128,82 @@ recommend_kali_version() {
     fi
 }
 
+# Function to display a spinner animation
+spinner() {
+    local pid=$1
+    local delay=0.1
+    local spinstr='|/-\'
+    while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
+        local temp=${spinstr#?}
+        printf " ${CYAN}[%c]${NC}  " "$spinstr"
+        local spinstr=$temp${spinstr%"$temp"}
+        sleep $delay
+        printf "\b\b\b\b\b\b"
+    done
+    printf "    \b\b\b\b"
+}
+
 # Function to fully remove Kali NetHunter
 remove_kali() {
     echo -e "${WHT}[*] Starting Kali NetHunter removal process...${NC}"
+    sleep 1
 
     # Stop any running NetHunter processes
     echo -e "${WHT}[*] Stopping NetHunter processes...${NC}"
     if [ -f "$HOME/kali-arm64/usr/bin/nethunter" ]; then
-        "$HOME/kali-arm64/usr/bin/nethunter" stop
+        "$HOME/kali-arm64/usr/bin/nethunter" stop &
+        spinner $!  # Show spinner while stopping processes
         check_status "Stop NetHunter processes"
+    else
+        echo -e "${YEL}[!] No NetHunter processes found.${NC}"
     fi
+    sleep 1
 
     # Remove Kali NetHunter directories
     echo -e "${WHT}[*] Removing Kali NetHunter directories...${NC}"
-    rm -rf "$HOME/kali-arm64" "$HOME/kali-armhf" "$HOME/kali-fs" "$HOME/kalinethunter" "$HOME/install-nethunter-termux"
+    rm -rf "$HOME/kali-arm64" "$HOME/kali-armhf" "$HOME/kali-fs" "$HOME/kalinethunter" "$HOME/install-nethunter-termux" &
+    spinner $!  # Show spinner while removing directories
     check_status "Remove directories"
+    sleep 1
 
     # Remove NetHunter symbolic links and commands
     echo -e "${WHT}[*] Removing NetHunter commands and links...${NC}"
-    rm -f /data/data/com.termux/files/usr/bin/nethunter
-    rm -f /data/data/com.termux/files/usr/bin/nh
+    rm -f /data/data/com.termux/files/usr/bin/nethunter /data/data/com.termux/files/usr/bin/nh &
+    spinner $!  # Show spinner while removing links
     check_status "Remove commands"
+    sleep 1
 
     # Remove NetHunter-related configurations in ~/.bashrc
     echo -e "${WHT}[*] Cleaning up .bashrc configurations...${NC}"
     if [ -f "$HOME/.bashrc" ]; then
-        sed -i '/nethunter/d' "$HOME/.bashrc"
-        sed -i '/nh/d' "$HOME/.bashrc"
+        sed -i '/nethunter/d' "$HOME/.bashrc" &
+        sed -i '/nh/d' "$HOME/.bashrc" &
+        spinner $!  # Show spinner while cleaning .bashrc
         check_status "Clean .bashrc"
+    else
+        echo -e "${YEL}[!] No .bashrc file found.${NC}"
     fi
+    sleep 1
 
     # Remove Termux boot scripts related to NetHunter
     echo -e "${WHT}[*] Removing Termux boot scripts...${NC}"
-    rm -rf "$HOME/.termux/boot/nethunter*"
+    rm -rf "$HOME/.termux/boot/nethunter*" &
+    spinner $!  # Show spinner while removing boot scripts
     check_status "Remove boot scripts"
+    sleep 1
 
     # Check if any residual files remain
     if [ -d "$HOME/kali-arm64" ] || [ -f /data/data/com.termux/files/usr/bin/nethunter ]; then
         echo -e "${RED}[✗] Some files could not be removed. Please check manually.${NC}"
     else
         echo -e "${GRN}[✓] Kali NetHunter fully removed!${NC}"
+        echo -e "${CYAN}"
+        typewriter "Removal completed successfully!"
+        echo -e "${NC}"
     fi
 }
 
+# Main logic
 if [ "$choice" == "1" ]; then
     clear
     check_device
