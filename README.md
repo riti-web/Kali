@@ -37,8 +37,18 @@ Under laws like the **Indian IT Act 2000** (and similar laws in other countries)
 > Use responsibly and ethically. 😎✌️
 
 ---
+📞 Contact
+
+📧 Email: yatharthcoding57@gmail.com
+
+📱 Phone: +91-7091507536 (for help or collabs)
+
+
+
+---
 
 ## 🚀 Usage
 ```bash
 cd Kali
 bash kali.sh
+
