@@ -1,47 +1,47 @@
 # 🛠️ Kali NetHunter Installer Script by Yatharth
 
-A sleek and modern Bash script to install or remove **Kali NetHunter** in **Termux** with a vibrant, user-friendly interface.  
-✨ *Hm* - proudly crafted by Yatharth.
+A sleek, modern **Bash script** to install or remove **Kali NetHunter** in **Termux**, featuring vibrant colors, interactive menus & a stylish ASCII banner.  
+✨ *Proudly crafted by Yatharth (Hm)*
 
 ---
 
 ## 🌟 Features
-- **Stylish ASCII Banner**: Eye-catching NetHunter banner signed by *Yatharth*.
-- **Interactive Menu**: Choose from device check, install, remove, or exit with colorful options.
-- **Device Compatibility Check**: Verifies Termux support and shows recommended Kali NetHunter version (Rooted, Lite, App Store).
-- **Smooth Installation**: Downloads & installs Kali NetHunter with proper permissions (`chmod 777`) and error handling.
-- **Clean Removal**: Safely removes Kali NetHunter files.
-- **End Notifications**: Clear success or error messages for each step.
-- **Pause for Review**: Device check results wait for user input before exiting.
+- 🎨 **Stylish ASCII Banner** signed by *Yatharth*
+- ✅ **Interactive Menu** (Check device, Install, Remove, Exit)
+- ⚙️ **Device Compatibility Check** (CPU, RAM, Storage) & auto recommendation: Full, Minimal, or Nano version
+- 🔧 **Smooth Installation**: Downloads NetHunter script, sets permissions (`chmod 777`)
+- 🧹 **Clean Removal**: Stops processes, removes all folders, symlinks & cleans `.bashrc`
+- 💬 **Typewriter animation** & colorful notifications
+- 🛡️ **Clear disclaimers & legal notice**
 
 ---
 
-##Disclaimer (Read carefully)
-> I (Yatharth / Hm) am not responsible for any misuse, wrong use, damage, or legal problems.
-I don't want to take that risk — so please use it completely at your own risk.
+## ⚠️ Disclaimer (Read Carefully)
+> I (Yatharth / Hm) am **not responsible** for any misuse, wrong use, damage or legal problems.  
+> Use completely at your **own risk**.
 
-__
-##⚖️ Hacking Law (Important)
+---
 
-Using hacking tools the wrong way can be illegal.
-Under laws like the Indian IT Act 2000 (and similar laws in many countries), unauthorized access, testing, or attacks on systems you don’t own can lead to fines or even jail.
+## ⚖️ Hacking Law (Important)
+Using hacking tools the wrong way can be **illegal**.  
+Under laws like the **Indian IT Act 2000** (and similar laws in other countries), unauthorized testing or attacks on systems you don’t own can lead to fines or jail.
 
-These tools should only be used:
+✅ Use these tools **only**:
+- For learning & educational purposes
+- On your own devices
+- Or with **clear written permission** (e.g., authorized penetration testing)
 
-For learning and educational purposes
+❌ Attacking someone else’s site, network, or device **without permission** is strictly illegal.
 
-On your own devices, or
+> Use responsibly and ethically. 😎✌️
 
-With clear permission (authorized penetration testing)
+---
 
-
-Testing or attacking someone else’s website, network, or device without permission is strictly illegal.
-
-> I (Yatharth / Hm) do not take any responsibility for misuse, damage, or legal problems caused by running this script.
-Please use responsibly and ethically. 😎✌️
-
-## 🎨 Banner Preview
+## 🚀 Usage
 ```bash
+chmod +x nethunter.sh
+./nethunter.sh
+🎨 Banner Preview
 ##################################################
 ##                                              ##
 ##  88      a8P         db        88        88  ##
