@@ -221,6 +221,7 @@ elif [ "$choice" == "3" ]; then
     remove_kali
 
 elif [ "$choice" == "4" ]; then
+    typewriter "Welcome to Kali NetHunter Installer by Yatharth"
     echo -e "${YEL}Exiting...${NC}"
     exit 0
 
