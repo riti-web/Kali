@@ -12,6 +12,7 @@ A sleek, modern **Bash script** to install or remove **Kali NetHunter** in **Ter
 - 🔧 **Smooth Installation**: Downloads NetHunter script, sets permissions (`chmod 777`)
 - 🧹 **Clean Removal**: Stops processes, removes all folders, symlinks & cleans `.bashrc`
 - 💬 **Typewriter animation** & colorful notifications
+- 🎁 **Hidden gift message** at the end to make it personal
 - 🛡️ **Clear disclaimers & legal notice**
 
 ---
@@ -41,16 +42,3 @@ Under laws like the **Indian IT Act 2000** (and similar laws in other countries)
 ```bash
 chmod +x nethunter.sh
 ./nethunter.sh
-🎨 Banner Preview
-##################################################
-##                                              ##
-##  88      a8P         db        88        88  ##
-##  88    .88'         d88b       88        88  ##
-##  88   88'          d8''8b      88        88  ##
-##  88 d88           d8'  '8b     88        88  ##
-##  8888'88.        d8YaaaaY8b    88        88  ##
-##  88     '88.   d8'        '8b  88        88  ##
-##  88       Y8b d8'          '8b 888888888 88  ##
-##            ~Ph no. 7091507536~               ##
-##############   ~By Yatharth~                  ##
-####### ######## NetHunter 😈 YATHARTH ###########
