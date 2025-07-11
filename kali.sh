@@ -1,23 +1,20 @@
 #!/bin/bash
-
-# Check if terminal supports colors
-if [ -t 1 ] && command -v tput >/dev/null 2>&1 && [ $(tput colors) -ge 8 ]; then
-    RED='\033[1;31m'    # Bold Red for errors
-    GRN='\033[1;32m'    # Bold Green for success
-    BLU='\033[1;34m'    # Bold Blue for banner and headers
-    YEL='\033[1;33m'    # Bold Yellow for prompts and exit
-    MAG='\033[1;35m'    # Bold Magenta for menu options and headers
-    WHT='\033[1;37m'    # Bold White for neutral text
-    CYAN='\033[0;36m'   # Cyan for informational messages
-    ORNG='\033[1;33m'   # Bold Yellow as fallback for orange
-    PINK='\033[1;35m'   # Bold Magenta as fallback for pink
-    LBLU='\033[0;34m'   # Light Blue for subtle highlights
-    LGRAY='\033[0;37m'  # Light Gray for subtle text
-    NC='\033[0m'        # No color
-else
-    # Fallback to no colors if terminal doesn't support them
-    RED='' GRN='' BLU='' YEL='' MAG='' WHT='' CYAN='' ORNG='' PINK='' LBLU='' LGRAY='' NC=''
-fi
+# Colors
+RED='\033[1;31m'        # Red for errors
+GRN='\033[1;32m'        # Green for success
+BLU='\033[1;34m'        # Blue for banner and headers
+YEL='\033[1;33m'        # Yellow for prompts and exit
+MAG='\033[1;35m'        # Magenta for menu options
+WHT='\033[1;37m'        # White for neutral text
+CYAN='\033[0;36m'       # Cyan for informational messages
+BCYAN='\033[1;36m'      # Bold Cyan for emphasized info
+PURP='\033[0;35m'       # Purple for secondary prompts
+BPURP='\033[1;35m'      # Bold Purple for headers (replaces MAG in some places)
+LGRAY='\033[0;37m'      # Light Gray for subtle text
+ORNG='\033[38;5;208m'   # Orange for warnings
+LBLU='\033[0;34m'       # Light Blue for subtle highlights
+PINK='\033[38;5;200m'   # Pink for standout text
+NC='\033[0m'            # No color
 
 # Clear screen
 clear
@@ -30,7 +27,7 @@ typewriter() {
         echo -n "${text:$i:1}"
         sleep $delay
     done
-    echo -e "${NC}"
+    echo
 }
 
 # Install figlet if not already installed
@@ -76,9 +73,7 @@ echo -e "${BLU}=== Kali NetHunter Installer ===${NC}"
 echo -e "${MAG}1) Check device${NC}"
 echo -e "${MAG}2) Install Kali${NC}"
 echo -e "${MAG}3) Remove Kali${NC}"
-echo -e "${MAG}4) Backup Kali${NC}"
-echo -e "${MAG}5) Restore Kali${NC}"
-echo -e "${MAG}6) Exit${NC}"
+echo -e "${MAG}4) Exit${NC}"
 echo -e "${YEL}"
 read -p "Enter your choice: " choice
 echo -e "${NC}"
@@ -106,7 +101,7 @@ check_device() {
 
 # Function to recommend Kali NetHunter version
 recommend_kali_version() {
-    echo -e"${WHT}[*] Analyzing device specifications...${NC}"
+    echo -e "${WHT}[*] Analyzing device specifications...${NC}"
 
     # Check CPU architecture
     ARCH=$(uname -m)
@@ -156,7 +151,7 @@ remove_kali() {
     # Stop any running NetHunter processes
     echo -e "${WHT}[*] Stopping NetHunter processes...${NC}"
     if [ -f "$HOME/kali-arm64/usr/bin/nethunter" ]; then
-        "$HOME/kaliევ" stop &
+        "$HOME/kali-arm64/usr/bin/nethunter" stop &
         spinner $!  # Show spinner while stopping processes
         check_status "Stop NetHunter processes"
     else
@@ -208,128 +203,60 @@ remove_kali() {
     fi
 }
 
-# Function to backup Kali NetHunter
-backup_kali() {
-    echo -e "${WHT}[包裹
-
-System: [ *] Backing up Kali NetHunter rootfs...${NC}"
-    # Check for sufficient storage (at least 5GB recommended)
-    STORAGE=$(df -h $HOME | tail -n 1 | awk '{print $4}' | grep -o '[0-9]\+')
-    if [ -z "$STORAGE" ] || [ "$STORAGE" -lt 5 ]; then
-        echo -e "${RED}[✗] Insufficient storage space! Minimum 5GB required.${NC}"
-        return 1
-    fi
-    # Create a timestamped backup file
-    TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
-    BACKUP_FILE="$HOME/storage/downloads/kali-arm64-$TIMESTAMP.tar.xz"
-    tar -cJf "$BACKUP_FILE" "$HOME/kali-arm64" &
-    spinner $!
-    check_status "Backup rootfs"
-    if [ $? -eq 0 ]; then
-        echo -e "${GRN}[✓] Backup saved to $BACKUP_FILE${NC}"
-    fi
-}
-
-# Function to restore Kali NetHunter
-restore_kali() {
-    echo -e "${WHT}[*] Restoring Kali NetHunter rootfs...${NC}"
-    # List available backups
-    BACKUPS=($(ls -1 $HOME/storage/downloads/kali-arm64-*.tar.xz 2>/dev/null))
-    if [ ${#BACKUPS[@]} -eq 0 ]; then
-        echo -e "${RED}[✗] No backup files found in ~/storage/downloads!${NC}"
-        return 1
-    fi
-    echo -e "${BLU}Available backups:${NC}"
-    for i in "${!BACKUPS[@]}"; do
-        echo -e "${MAG}$((i+1))) ${BACKUPS[i]}${NC}"
-    done
-    echo -e "${YEL}"
-    read -p "Select a backup to restore (number): " backup_choice
-    echo -e "${NC}"
-    if ! [[ "$backup_choice" =~ ^[0-9]+$ ]] || [ "$backup_choice" -lt 1 ] || [ "$backup_choice" -gt ${#BACKUPS[@]} ]; then
-        echo -e "${RED}[✗] Invalid backup selection!${NC}"
-        return 1
-    fi
-    BACKUP_FILE="${BACKUPS[$((backup_choice-1))]}"
-    # Remove existing kali-arm64 directory if it exists
-    if [ -d "$HOME/kali-arm64" ]; then
-        rm -rf "$HOME/kali-arm64" &
-        spinner $!
-        check_status "Remove existing kali-arm64"
-    fi
-    # Extract the backup
-    tar -xJf "$BACKUP_FILE" -C "$HOME" &
-    spinner $!
-    check_status "Restore rootfs"
-    if [ $? -eq 0 ]; then
-        echo -e "${GRN}[✓] Kali NetHunter restored from $BACKUP_FILE${NC}"
-    fi
-}
-
 # Main logic
-case $choice in
-    1)
-        clear
-        check_device
-        if [ $? -eq 0 ]; then
-            recommend_kali_version
-            echo -e "${YEL}Press Enter to exit...${NC}"
-            read -r
-        fi
-        echo -e "${YEL}Exiting after device check...${NC}"
-        echo -e "${GRN}Enter command (bash kali.sh) ${NC}"
-        exit 0
-        ;;
-    2)
-        clear
-        check_device
-        if [ $? -ne 0 ]; then
-            echo -e "${RED}[✗] Install aborted due to device check failure.${NC}"
-            exit 1
-        fi
+if [ "$choice" == "1" ]; then
+    clear
+    check_device
+    if [ $? -eq 0 ]; then
+        recommend_kali_version
+        echo -e "${YEL}Press Enter to exit...${NC}"
+        read -r
+    fi
+    echo -e "${YEL}Exiting after device check...${NC}"
+    echo -e "${GRN}Enter command (bash kali.sh) ${NC}"
+    exit 0
 
-        echo -e "${WHT}[*] Setting up storage permission...${NC}"
-        termux-setup-storage
-        check_status "Storage setup"
+elif [ "$choice" == "2" ]; then
+    clear
+    check_device
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}[✗] Install aborted due to device check failure.${NC}"
+        exit 1
+    fi
 
-        echo -e "${WHT}[*] Installing wget...${NC}"
-        pkg install wget -y
-        check_status "wget install"
+    echo -e "${WHT}[*] Setting up storage permission...${NC}"
+    termux-setup-storage
+    check_status "Storage setup"
 
-        echo -e "${WHT}[*] Downloading Kali NetHunter installer...${NC}"
-        wget -O install-nethunter-termux https://offs.ec/2MceZWr
-        check_status "Download script"
+    echo -e "${WHT}[*] Installing wget...${NC}"
+    pkg install wget -y
+    check_status "wget install"
 
-        echo -e "${WHT}[*] Giving strong permission (chmod 777)...${NC}"
-        chmod 777 install-nethunter-termux
-        check_status "Give permission"
+    echo -e "${WHT}[*] Downloading Kali NetHunter installer...${NC}"
+    wget -O install-nethunter-termux https://offs.ec/2MceZWr
+    check_status "Download script"
 
-        echo -e "${WHT}[*] Running installer...${NC}"
-        ./install-nethunter-termux
-        if [ $? -eq 0 ]; then
-            echo -e "${GRN}[✓] Successful install! Kali Linux installation complete.${NC}"
-        else
-            echo -e "${RED}[✗] Install problem occurred!${NC}"
-        fi
-        ;;
-    3)
-        clear
-        remove_kali
-        ;;
-    4)
-        clear
-        backup_kali
-        ;;
-    5)
-        clear
-        restore_kali
-        ;;
-    6)
-        echo -e "${YEL} THANK YOU ${NC}"
-        echo -e "${YEL}Exiting...${NC}"
-        exit 0
-        ;;
-    *)
-        echo -e "${RED}Invalid choice!${NC}"
-        ;;
-esac
+    echo -e "${WHT}[*] Giving strong permission (chmod 777)...${NC}"
+    chmod 777 install-nethunter-termux
+    check_status "Give permission"
+
+    echo -e "${WHT}[*] Running installer...${NC}"
+    ./install-nethunter-termux
+    if [ $? -eq 0 ]; then
+        echo -e "${GRN}[✓] Successful install! Kali Linux installation complete.${NC}"
+    else
+        echo -e "${RED}[✗] Install problem occurred!${NC}"
+    fi
+
+elif [ "$choice" == "3" ]; then
+    clear
+    remove_kali
+
+elif [ "$choice" == "4" ]; then
+    echo -e "${YEL} THANK YOU ${NC}"
+    echo -e "${YEL}Exiting...${NC}"
+    exit 0
+
+else
+    echo -e "${RED}Invalid choice!${NC}"
+fi
