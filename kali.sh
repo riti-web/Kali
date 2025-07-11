@@ -132,7 +132,7 @@ recommend_kali_version() {
 spinner() {
     local pid=$1
     local delay=0.1
-    local spinstr='|/-\'
+    local spinstr='---'
     while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
         local temp=${spinstr#?}
         printf " ${CYAN}[%c]${NC}  " "$spinstr"
