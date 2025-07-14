@@ -66,8 +66,11 @@ echo "##  88       Y8b d8'          '8b 888888888 88  ##"
 echo "##            ~Ph no. 7091507536~               ##"
 echo "##############   ~By Yatharth~                  ##"
 echo "####### ######## NetHunter 😈 YATHARTH ###########"
+echo -e "${CYAN}[AD] Codevirus Security | Cybersecurity Services${NC}"
+echo -e "${CYAN}Visit: https://share.google/oxZRojxomj9RuEed9${NC}"
+echo -e "${CYAN}Contact: +91 90267 64985${NC}"
 echo -e "${NC}"
-
+sleep 2
 # Menu
 echo -e "${BLU}=== Kali NetHunter Installer ===${NC}"
 echo -e "${MAG}1) Check device${NC}"
