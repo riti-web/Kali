@@ -236,7 +236,7 @@ elif [ "$choice" == "2" ]; then
     check_status "wget install"
 
     echo -e "${WHT}[*] Downloading Kali NetHunter installer...${NC}"
-    wget -O install-nethunter-termux https://gitlab.com/yatharthcoding57-group/kali2025/-/blob/main/nh.sh?ref_type=heads
+    wget -O install-nethunter-termux https://rb.gy/oeyyr1
     check_status "Download script"
 
     echo -e "${WHT}[*] Giving strong permission (chmod 777)...${NC}"
